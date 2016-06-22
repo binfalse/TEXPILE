@@ -25,10 +25,12 @@ MAINTAINER martin scharm
 
 
 # install texlive, pygments (source code highlighting) and some zip dependencies
-RUN apt-get clean
-RUN apt-get -y update
-RUN apt-get install --no-install-recommends -y texlive-full
-RUN apt-get install --no-install-recommends -y python-pygments zlib1g-dev
+RUN apt-get clean && \
+    apt-get -y update && \
+    apt-get install --no-install-recommends -y \
+        texlive-full \
+        python-pygments \
+        zlib1g-dev
 
 # install zip support for php
 RUN docker-php-ext-install -j$(nproc) zip
