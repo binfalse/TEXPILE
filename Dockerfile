@@ -23,9 +23,18 @@ FROM php:apache
 # see http://binfalse.de/contact/ if you want to contact me
 MAINTAINER martin scharm
 
-# install texlive
-RUN apt-get -y update && apt-get install -y texlive-full python-pygments
 
-# copy the 
+# install texlive, pygments (source code highlighting) and some zip dependencies
+RUN apt-get clean
+RUN apt-get -y update
+RUN apt-get install --no-install-recommends -y texlive-full
+RUN apt-get install --no-install-recommends -y python-pygments zlib1g-dev
+
+# install zip support for php
+RUN docker-php-ext-install -j$(nproc) zip
+
+# copy some php config -- we'd like to upload files bigger than default
+COPY php.ini /usr/local/etc/php/
+
+# copy the actual script into the image
 COPY index.php /var/www/html/
-

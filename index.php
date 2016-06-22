@@ -16,31 +16,34 @@
 # You should have received a copy of the GNU General Public License along with
 # TEXPILE. If not, see <http://www.gnu.org/licenses/>.
 
+$LATEX = "/usr/bin/pdflatex";
+$BIBTEX = "/usr/bin/bibtex";
 
 
 
-function error ($msg)
+function error ($msg, $errcode = "HTTP/1.1 400 Bad Request")
 {
+	header($errcode);
     echo "<!DOCTYPE html><html><head><title>TEXPILE</title><style>.error {color: red;}</style></head><body>
 <h1>TEXPILE</h1>
 <h2>Error</h2><div class='error'>" . $msg . "</div>
 <h2>Usage</h2>
 Send a <code>multipart/form-data</code> request to this webserver. The folloing fields are recognized:
 <dl>
-<dt><code>document</code> <strong>(required)</strong></dt>
-<dd>the tex-file to be compiled</dd>
-<dt><code>filename</code></dt>
-<dd>the file name of the pdf file</dd>
+<dt><code>project</code> <strong>(required)</strong></dt>
+<dd>Either a single tex-file to be compiled, or a zip file containing a whole tex project including all necessary files for pdflatex.</dd>
+<dt><code>filename</code> (required if `project` is a zip)</dt>
+<dd>If `project` is a zip container `filename` points to the file containing the root document of the project.</dd>
 </dl>
 <h3>Examples</h3>
 <h4>Using cURL</h4>
 <pre>
-curl -F filename=example.pdf -F document=@example.tex http://localhost:1234 > example.pdf
+curl -F project=@example.tex http://localhost:1234 > example.pdf
 </pre>
 <h4>Using PHP and cURL</h4>
 <pre>
 post = array (
-    'document' => curl_file_create ('./example.tex')
+    'project' => curl_file_create ('./example.tex')
 );
 
 \$ch = curl_init('http://localhost:1234');
@@ -59,41 +62,83 @@ curl_close (\$ch);
 exit;
 }
 
+function executeCmd ($cmd, &$output)
+{
+	$output[] = "executing: " . $cmd;
+	exec ($cmd, $out, $result);
+	foreach ($out as $o)
+		$output[] = $o;
+	return $result;
+}
 
 
 # did they send a document?
-if (!isset ($_FILES["document"])  || empty ($_FILES["document"]))
-{
-    error ("there is no document");
-}
+if (!isset ($_FILES["project"])  || empty ($_FILES["project"]))
+	error ("Did not receive a Tex project.");
+
 
 
 $latex = "/usr/bin/pdflatex";
 
-$filename = "document.pdf";
-if (isset ($_POST["filename"]) || empty ($_POST["filename"]))
-$filename = $_POST["filename"];
 
-$tmptex = tempnam("/tmp", "timetracking.tex");
-while (file_exists ($tmptex.".tex") || file_exists ($tmptex.".pdf"))
-    $tmptex = tempnam("/tmp", "timetracking.tex");
+$tmptex = tempnam ("/tmp", "TEXPILE");
+while (file_exists ($tmptex.".tex") || file_exists ($tmptex.".pdf") || file_exists ($tmptex.".zip"))
+    $tmptex = tempnam("/tmp", "TEXPILE");
 
-chdir (dirname ($tmptex));
+$path_parts = pathinfo ($tmptex);
+$in = $path_parts['filename'] . ".tex";
+$aux = $path_parts['filename'] . ".aux";
+$out = $path_parts['filename'] . ".pdf";
+chdir ($path_parts['dirname']);
 
-if (!move_uploaded_file($_FILES["document"]["tmp_name"], $tmptex.".tex"))
+
+
+if (!move_uploaded_file($_FILES["project"]["tmp_name"], $in))
+	error ("Sorry, there was an error uploading your project: " . $_FILES["project"]["tmp_name"]);
+
+
+// is that a zip container
+$zipArchive = new ZipArchive(); 
+$result = $zipArchive->open($in);
+if ($result === TRUE)
 {
-    error ("Sorry, there was an error uploading your file.");
+	if (!isset ($_POST["filename"]) || empty ($_POST["filename"]))
+		error ("Looks like you provided a ZIP archive of your project, but you didn't tell me which file contains the root element. Please use the `filename` field!");
+	
+	$filename = $_POST["filename"];
+	while (substr ($filename, 0, 1) == '/')
+		$filename = substr ($filename, 1);
+	
+	if (!$zipArchive->getFromName ($filename))
+		error ("Your ZIP container doesn't contain a file named " . $filename . "!?");
+	
+	$dir = $tmptex.".zip";
+	mkdir ($dir);
+	$zipArchive->extractTo ($dir);
+	$zipArchive->close ();
+	
+	$path_parts = pathinfo ($dir . '/' . $filename);
+	if ($path_parts['extension'] != "tex")
+		error ("Your root file '$filename' doesn't seem to be a tex file. It should end with '.tex'!");
+	
+	$in = $path_parts['filename'] . ".tex";
+	$aux = $path_parts['filename'] . ".aux";
+	$out = $path_parts['filename'] . ".pdf";
+	chdir ($path_parts['dirname']);
 }
 
+if (!file_exists ($in))
+	error ("Internal error: Couldn't find the tex file!", "HTTP/1.1 500 Internal Server Error");
 
 
 
+$fulloutput = array ();
+$result = executeCmd ('/usr/bin/latexmk -bibtex -g -gg -f -cd -ps- -pdf -pdflatex="pdflatex --interaction=nonstopmode -shell-escape %O %S" "' . $in . '"', $fulloutput);
 
-exec ($latex . ' -interaction=nonstopmode ' . $tmptex.".tex", $output, $result);
 
-if ($result != 0)
+if ($result != 0 || !file_exists ($out))
 {
-    error ("<pre><" . implode ("\n", $output) . "</pre>");
+    error ("<pre>return code was $result -- here is the output:\n" . implode ("<br />\n", $fulloutput) . "</pre>");
 }
 else
 {
@@ -101,14 +146,42 @@ else
     header('Cache-Control: must-revalidate');
     header('Pragma: public');
     header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="'.$filename.'"');
-    header('Content-Length: ' . filesize($tmptex.".pdf"));
-    readfile ($tmptex.".pdf");
+    header('Content-Disposition: attachment; filename="document.pdf"');
+    header('Content-Length: ' . filesize($out));
+    readfile ($out);
     exit;
 }
 
+# cleanup
+# function adapted from http://php.net/manual/en/function.rmdir.php#92050
+function rm ($dir)
+{
+	if (!file_exists($dir))
+		return true;
+	
+	if (!is_dir($dir) || is_link($dir))
+		return unlink($dir);
+	
+	foreach (scandir ($dir) as $item)
+	{
+		if ($item == '.' || $item == '..')
+			continue;
+		if (!rm ($dir . "/" . $item))
+		{
+			chmod ($dir . "/" . $item, 0777);
+			if (!rm ($dir . "/" . $item))
+				return false;
+		};
+	}
+	return rmdir($dir);
+}
 
-
-
+# get rid of all the temporary files
+# TODO: there are some more temporary files
+executeCmd ('/usr/bin/latexmk -C "' . $in . '"', $fulloutput);
+rm ($tmptex.".tex");
+rm ($tmptex.".aux");
+rm ($tmptex.".pdf");
+rm ($tmptex.".zip");
 
 ?>
