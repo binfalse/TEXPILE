@@ -1,0 +1,7 @@
+# this .htaccess will map all requests to
+# the TEXPILE's index.php
+# that e.g. necessary for /heartbeat
+
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ /index.php [NC,L,QSA]

@@ -72,6 +72,14 @@ function executeCmd ($cmd, &$output)
 }
 
 
+# heartbeat for monitoring purposes
+if (isset ($_SERVER['REQUEST_URI']) && strpos ($_SERVER['REQUEST_URI'], "heartbeat") !== false)
+{
+    echo "up and running!\n";
+    exit;
+}
+
+
 # did they send a document?
 if (!isset ($_FILES["project"])  || empty ($_FILES["project"]))
 	error ("Did not receive a Tex project.");

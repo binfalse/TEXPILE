@@ -35,8 +35,16 @@ RUN apt-get clean && \
 # install zip support for php
 RUN docker-php-ext-install -j$(nproc) zip
 
+# enable the rewrite module
+RUN a2enmod rewrite
+
 # copy some php config -- we'd like to upload files bigger than default
 COPY texpile/php.ini /usr/local/etc/php/
 
 # copy the actual script into the image
 COPY texpile/index.php /var/www/html/
+
+# copy the .htaccess file into the image
+# the .htaccess will map everything to the index.php script
+# that's especially necessary for /heartbeat
+COPY texpile/.htaccess /var/www/html/
