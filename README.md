@@ -1,6 +1,6 @@
 # TEXPILE
 
-TEXPILE is an online compiler for Latex projects. The idea is that you jsut need to throw your tex project against a web interface and you'll get back the compiled PDF document.
+TEXPILE is an online compiler for LaTeX projects. The idea is that you just need to throw your tex project against a web interface and you'll receive back the compiled PDF document.
 
 
 
@@ -9,7 +9,7 @@ TEXPILE is an online compiler for Latex projects. The idea is that you jsut need
 ## ORGANISATIONAL
 
 * TEXPILE's code is hosted at GitHub: [github.com/binfalse/TEXPILE](https://github.com/binfalse/TEXPILE)
-* TEXPILE is available as a Docker container from the Docker Hub: [hub.docker.com/r/binfalse/texpile/](https://hub.docker.com/r/binfalse/texpile/)
+* TEXPILE is available as a Docker image from the Docker Hub: [hub.docker.com/r/binfalse/texpile/](https://hub.docker.com/r/binfalse/texpile/)
 * Issues and feature requests are tracked on GitHub: [github.com/binfalse/TEXPILE/issues](https://github.com/binfalse/TEXPILE/issues) -- [create new issue](https://github.com/binfalse/TEXPILE/issues/new)
 
 
@@ -24,6 +24,8 @@ Thanks to Docker it is very easy to run TEXPILE. You can pull and run the image 
 
 This will download the lates version of TEXPILE's image and run it on your machine.
 TEXPILE's webserver will bind to your machine's port `1234` so you can access it with a web browser at http://localhost:1234
+
+## Monitoring
 
 If you want to monitor TEXPILE you can send an HTTP GET request to http://localhost:1234/heartbeat and expect an `HTTP/1.1 200 OK` together with the content `up and running!` as a response.
 For example:
@@ -48,6 +50,8 @@ For example:
 If you're using Nagios' NRPE service you may find the following snippet useful to setup monitoring for TEXPILE:
 
     command[check_texpile]=/usr/lib/nagios/plugins/check_http -I 127.0.0.1 -p 1234 -u /heartbeat
+
+## Listen on a public network interface
 
 TEXPILE can of course be setup to listen on the host's public IP address. Let's assume the host's IP address is `85.214.59.220` and let's use port `7777` in this example, then just start the container using the following command line:
 
