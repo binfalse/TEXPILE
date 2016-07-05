@@ -36,7 +36,7 @@ RUN apt-get clean && \
 RUN docker-php-ext-install -j$(nproc) zip
 
 # copy some php config -- we'd like to upload files bigger than default
-COPY php.ini /usr/local/etc/php/
+COPY texpile/php.ini /usr/local/etc/php/
 
 # copy the actual script into the image
-COPY index.php /var/www/html/
+COPY texpile/index.php /var/www/html/
