@@ -25,7 +25,7 @@ Thanks to Docker it is very easy to run TEXPILE. You can pull and run the image 
 This will download the lates version of TEXPILE's image and run it on your machine.
 TEXPILE's webserver will bind to your machine's port `1234` so you can access it with a web browser at http://localhost:1234
 
-## Monitoring
+### Monitoring
 
 If you want to monitor TEXPILE you can send an HTTP GET request to http://localhost:1234/heartbeat and expect an `HTTP/1.1 200 OK` together with the content `up and running!` as a response.
 For example:
@@ -51,7 +51,7 @@ If you're using Nagios' NRPE service you may find the following snippet useful t
 
     command[check_texpile]=/usr/lib/nagios/plugins/check_http -I 127.0.0.1 -p 1234 -u /heartbeat
 
-## Listen on a public network interface
+### Listen on a public network interface
 
 TEXPILE can of course be setup to listen on the host's public IP address. Let's assume the host's IP address is `85.214.59.220` and let's use port `7777` in this example, then just start the container using the following command line:
 
@@ -69,7 +69,7 @@ As soon as the container is up and running you may point the browser to it and y
 
 
 
-## Compiling a standalone LaTeX file
+### Compiling a standalone LaTeX file
 To actually compile a single LaTeX file with the help of TEXPILE you can just send it using HTTP POST. The file is expected in the form-field parameter `project`. A simple commandline call with `cURL` would thus look like:
 
     curl -F project=@example.tex http://localhost:1234 > /tmp/exmaple.pdf
@@ -85,7 +85,7 @@ All examples will compile the [file `example/example.tex`](example/example.tex) 
 
 
 
-## Compiling a complex LaTeX project
+### Compiling a complex LaTeX project
 To compile a LaTeX project that consists of multiple files you first need to bundle all necessary files in a ZIP archive. Then you can ship the ZIP container to TEXPILE, which expects the ZIP content as the form-field parameter `project` and the LaTeX root document as the `filename` parameter. Using cURL a commandline call may look like:
 
     zip -r /tmp/zipfile.zip *
@@ -103,7 +103,7 @@ All examples will compile the [project in `example/example-multidoc/`](example/e
 
 
 
-## Compilation Problems
+### Compilation Problems
 Of course, it may happen that TEXPILE isn't able to compile a certain document or project. In that case, it will return an HTTP status code other than the usual `HTTP/1.1 200 OK` (e.g. `HTTP/1.1 400 Bad Request` if you forgot to send the `filename` of root document in you zipp'ed project, or `HTTP/1.1 500 Internal Server Error` if something's wrong on the server side).
 
 In addition, TEXPILE will return an HTML page giving more information on the error together with the output of the `pdflatex` tool, if available.
