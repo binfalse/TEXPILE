@@ -11,7 +11,7 @@ TEXPILE is an online compiler for LaTeX projects. The idea is that you just need
 * TEXPILE's code is hosted at GitHub: [github.com/binfalse/TEXPILE](https://github.com/binfalse/TEXPILE)
 * TEXPILE is available as a Docker image from the Docker Hub: [hub.docker.com/r/binfalse/texpile/](https://hub.docker.com/r/binfalse/texpile/)
 * Issues and feature requests are tracked on GitHub: [github.com/binfalse/TEXPILE/issues](https://github.com/binfalse/TEXPILE/issues) -- [create new issue](https://github.com/binfalse/TEXPILE/issues/new)
-
+* There is [an article featuring TEXPILE](https://binfalse.de/2016/07/29/generate-pdf-documents-on-smartphones-smartwatches-raspberry-pis-etc/) in [my blog](https://binfalse.de).
 
 
 
