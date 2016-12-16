@@ -30,7 +30,9 @@ RUN apt-get clean && \
     apt-get install --no-install-recommends -y \
         texlive-full \
         python-pygments \
-        zlib1g-dev
+        zlib1g-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # install zip support for php
 RUN docker-php-ext-install -j$(nproc) zip
