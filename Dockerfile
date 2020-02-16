@@ -31,6 +31,7 @@ RUN apt-get clean && \
         texlive-full \
         python-pygments \
         zlib1g-dev \
+        libzip-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
